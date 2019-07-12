@@ -1,10 +1,17 @@
 import React from 'react';
-import {View, Text} from 'react-native'
+import {View, Text, StyleSheet} from 'react-native'
 
 const Page = () => (
     <View>
-        <Text> Hello </Text>
+        <Text style={styles.text}> {this.props.NomeObg} </Text>
     </View>
 );
+
+const styles = StyleSheet.create({
+    text : {
+        color: 'blue',
+        fontSize: 20
+    }
+});
 
 export default Page;

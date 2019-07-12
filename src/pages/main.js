@@ -1,8 +1,7 @@
 import React, {Component} from 'react'
 import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import api from '../services/api'
-import DropdownMenu from 'react-native-dropdown-menu'
-import { blue } from 'ansi-colors';
+
 
 export default class Main extends Component {
     static navigationOptions = {
@@ -12,6 +11,7 @@ export default class Main extends Component {
     state = {
         licitacoes: [],
         page: 1,
+        response_status : 0
     }
 
     componentDidMount() {
@@ -20,31 +20,20 @@ export default class Main extends Component {
 
     loadLicitacoes = async (page = 1) => {
         let response, licitacoes;
-        /*try {
-            response = await api.get(`/licitacoes?pagina=${page}`);
-            if(response.status === 502) return null;
-        } */
-        try{
-            response = await api.get(`/licitacoes?pagina=${page}`)
 
-            .catch(function(error) {
-                error.response || error.request ? null :  licitacoes = response.data;
-            });
-        } catch(error) {
-            return null;
-        }
-
-        this.checandoResponse(licitacoes);
-        
-    };
-
-    checandoResponse(licitacoes) {
-        if (licitacoes)  {
+        response = await api.get(`/licitacoes?pagina=${page}`)
+        if (response.status > 200) {
+            licitacoes = null
+            this.setState( {response_status : response.status} )
+        } else {
+            licitacoes = response.data
             this.setState( {licitacoes: [...this.state.licitacoes, ...licitacoes], page});
         }
-    }
+
+    };
 
     renderItem = ( {item} ) => (
+
 
         <View style={styles.licContainer}>
 
@@ -52,7 +41,7 @@ export default class Main extends Component {
             <Text style={styles.licNome}> {item.NomeObg} </Text>
             <Text style={styles.licChave}> {item.CodLicitacao} </Text>
 
-            <TouchableOpacity style={styles.licButton} onPress={ () => navigator.navigate('Licitacao') }>
+            <TouchableOpacity style={styles.licButton} onPress={ () => this.props.navigation.navigate('Licitacao', props=item) }>
                 <Text style={styles.licButtonText}> Acessar </Text>
             </TouchableOpacity> 
 
@@ -79,11 +68,11 @@ export default class Main extends Component {
         />;
 
         const nada = <Text style={styles.errorText}> Err, eu acho que tem algo errado...</Text>;
-
+        
         return(
             <View style={styles.container}>
 
-                {this.state.licitacoes.length > 0 ? flatlist : nada}
+                {this.state.response_status > 200 ? nada : flatlist}
                 
             </View>
         ); 
