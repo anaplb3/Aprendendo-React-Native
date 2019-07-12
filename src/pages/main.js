@@ -2,6 +2,7 @@ import React, {Component} from 'react'
 import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import api from '../services/api'
 import DropdownMenu from 'react-native-dropdown-menu'
+import { blue } from 'ansi-colors';
 
 export default class Main extends Component {
     static navigationOptions = {
@@ -18,23 +19,43 @@ export default class Main extends Component {
     }
 
     loadLicitacoes = async (page = 1) => {
-        
-        const response = await api.get(`/licitacoes?pagina=${page}`);
-        const licitacoes = response.data;
-        
-        this.setState( {
-            licitacoes: [...this.state.licitacoes, ...licitacoes], page});
+        let response, licitacoes;
+        /*try {
+            response = await api.get(`/licitacoes?pagina=${page}`);
+            if(response.status === 502) return null;
+        } */
+        try{
+            response = await api.get(`/licitacoes?pagina=${page}`)
+
+            .catch(function(error) {
+                error.response || error.request ? null :  licitacoes = response.data;
+            });
+        } catch(error) {
+            return null;
+        }
+
+        this.checandoResponse(licitacoes);
         
     };
 
-    renderItem = ( {item} ) => (
-        <View style={styles.partContainer}>
-            <Text style={styles.partNome}> {item.NomeObg} </Text>
-            <Text style={styles.partChave}> {item.CodLicitacao} </Text>
+    checandoResponse(licitacoes) {
+        if (licitacoes)  {
+            this.setState( {licitacoes: [...this.state.licitacoes, ...licitacoes], page});
+        }
+    }
 
-            <TouchableOpacity style={styles.partButton} onPress={ () => {} }>
-                <Text style={styles.partButtonText}> Acessar </Text>
-            </TouchableOpacity>
+    renderItem = ( {item} ) => (
+
+        <View style={styles.licContainer}>
+
+            
+            <Text style={styles.licNome}> {item.NomeObg} </Text>
+            <Text style={styles.licChave}> {item.CodLicitacao} </Text>
+
+            <TouchableOpacity style={styles.licButton} onPress={ () => navigator.navigate('Licitacao') }>
+                <Text style={styles.licButtonText}> Acessar </Text>
+            </TouchableOpacity> 
+
         </View>
     );
 
@@ -47,17 +68,22 @@ export default class Main extends Component {
     }
 
     render() {
+
+        const flatlist = <FlatList
+        contentContainerStyle={styles.list} 
+        data={this.state.licitacoes} 
+        keyExtractor={item => item.id}
+        renderItem={this.renderItem}
+        onEndReached={this.loadMore}
+        onEndReachedThreshold={0.1}
+        />;
+
+        const nada = <Text style={styles.errorText}> Err, eu acho que tem algo errado...</Text>;
+
         return(
             <View style={styles.container}>
 
-                <FlatList
-                    contentContainerStyle={styles.list} 
-                    data={this.state.licitacoes} 
-                    keyExtractor={item => item.id}
-                    renderItem={this.renderItem}
-                    onEndReached={this.loadMore}
-                    onEndReachedThreshold={0.1}
-                    />
+                {this.state.licitacoes.length > 0 ? flatlist : nada}
                 
             </View>
         ); 
@@ -70,11 +96,19 @@ const styles = StyleSheet.create({
         backgroundColor: "#fafafa"
     },
 
+    errorText: {
+        fontSize: 22,
+        color: "#DA552F",
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
     list: {
         padding: 20
     },
 
-    partContainer: {
+    licContainer: {
         backgroundColor: "#FFF",
         borderWidth: 1,
         borderColor: "#DDD",
@@ -83,20 +117,20 @@ const styles = StyleSheet.create({
         marginBottom: 20
     },
 
-    partNome: {
+    licNome: {
         fontSize: 18,
         fontWeight: "bold",
         color: "#333"
     },
 
-    partChave: {
+    licChave: {
         fontSize: 16,
         color: "#999",
         marginTop: 5,
         lineHeight: 24
     },
 
-    partButton: {
+    licButton: {
         height: 42,
         borderRadius: 5,
         borderWidth: 2,
@@ -107,7 +141,7 @@ const styles = StyleSheet.create({
         marginTop: 10 
     },
 
-    partButtonText: {
+    licButtonText: {
         fontSize: 16,
         color: '#DA552F',
         fontWeight: 'bold'
